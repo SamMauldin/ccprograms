@@ -1,0 +1,8 @@
+server="http://sxw.zapto.org/"
+function send(msg, nick)
+tosend=textutils.urlencode("<[CC]"..nick.."> "..msg)
+http.get(server.."send?msg="..tosend)
+end
+function get()
+return http.get(server.."last").readAll()
+end
