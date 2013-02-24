@@ -1,7 +1,11 @@
 local chrooted=false
 local chrootpath=""
 local chrootpass=nil
-local rootfs=fs
+local rootfs = {}
+
+for k,v in pairs(fs) do
+  rootfs[k] = v
+end
 
 function chroot(path, pass)
 if chrooted then
