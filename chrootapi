@@ -17,7 +17,7 @@ else
 chrootpass=pass
 end
 if fs.isDir(path) then
-chrootpath=path
+chrootpath=rootfs.combine("", path)
 chrooted=true
 else
 error("Could not find chroot path or is not a directory")
@@ -27,7 +27,7 @@ function unchroot(pass)
 if chrooted then
 if chrootpass==pass then
 chrooted=false
-chrootpath="/"
+chrootpath=""
 return true
 else
 error("Pass incorrect")
@@ -46,8 +46,11 @@ end
 --BEGIN
 local function valid(path)
 local xpath=fs.combine(chrootpath, path)
+if string.sub(path, 1, #chrootpath) ==  chrootpath then
 return xpath
---error("No escaping the chroot jail! The xpath is "..xpath)
+else
+error("No escaping the chroot jail! The xpath is "..xpath)
+end
 end
 
 fs.list=function(path)
