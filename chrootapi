@@ -46,7 +46,7 @@ end
 --BEGIN
 local function valid(path)
 local xpath=fs.combine(chrootpath, path)
-if string.sub(path, 1, #chrootpath) ==  chrootpath then
+if starts(xpath, chrootpath) then
 return xpath
 else
 error("No escaping the chroot jail! The xpath is "..xpath)
