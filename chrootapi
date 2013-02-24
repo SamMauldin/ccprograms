@@ -1,0 +1,97 @@
+local chrooted=false
+local chrootpath="/"
+local chrootpass=nil
+local rootfs=fs
+
+function chroot(path, pass)
+if chrooted then
+error("Cannot chroot from pre-existing chroot enviroment without unchrooting")
+end
+if not pass then
+chrootpass=nil
+else
+chrootpass=pass
+end
+if fs.isDir(path) then
+chrootpath=path
+chrooted=true
+else
+error("Could not find chroot path or is not a directory")
+end
+end
+function unchroot(pass)
+if chrooted then
+if chrootpass==pass then
+chrooted=false
+chrootpath="/"
+return true
+else
+error("Pass incorrect")
+end
+else
+error("Not chrooted.")
+end
+end
+function isChrooted()
+return chrooted
+end
+--From lua users wiki
+local function starts(String,Start)
+   return string.sub(String,1,string.len(Start))==Start
+end
+--BEGIN
+local function valid(path)
+local xpath=fs.combine(chrootpath, path)
+if starts(xpath, chrootpath) then
+return true
+else
+error("No escaping the chroot jail!")
+end
+end
+
+fs.list=function(path)
+valid(path)
+return rootfs.list(chrootpath..path)
+end
+fs.exists=function(path)
+valid(path)
+return rootfs.exists(chrootpath..path)
+end
+fs.isDir=function(path)
+valid(path)
+return rootfs.isDir(chrootpath..path)
+end
+fs.isReadOnly=function(path)
+valid(path)
+return rootfs.isReadOnly(chrootpath..path)
+end
+fs.getDrive=function(path)
+valid(path)
+return rootfs.getDrive(chrootpath..path)
+end
+fs.getSize=function(path)
+valid(path)
+return rootfs.getSize(chrootpath..path)
+end
+fs.makeDir=function(path)
+valid(path)
+return rootfs.makeDir(chrootpath..path)
+end
+fs.move=function(path, cpath)
+valid(path)
+valid(cpath)
+return rootfs.move(chrootpath..path, chrootpath..cpath)
+end
+fs.copy=function(path, cpath)
+valid(path)
+valid(cpath)
+return rootfs.copy(chrootpath..path, chrootpath..cpath)
+end
+fs.delete=function(path)
+valid(path)
+return rootfs.delete(chrootpath..path)
+end
+fs.open=function(path, m)
+valid(path)
+return rootfs.open(chrootpath..path, m)
+end
