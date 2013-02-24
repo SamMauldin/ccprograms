@@ -1,5 +1,5 @@
 local chrooted=false
-local chrootpath="/"
+local chrootpath=""
 local chrootpass=nil
 local rootfs=fs
 
@@ -42,56 +42,40 @@ end
 --BEGIN
 local function valid(path)
 local xpath=fs.combine(chrootpath, path)
-if starts(xpath, chrootpath) then
-return true
-else
-error("No escaping the chroot jail! The xpath is "..xpath)
-end
+return xpath
+--error("No escaping the chroot jail! The xpath is "..xpath)
 end
 
 fs.list=function(path)
-valid(path)
-return rootfs.list(chrootpath..path)
+return rootfs.list(valid(path))
 end
 fs.exists=function(path)
-valid(path)
-return rootfs.exists(chrootpath..path)
+return rootfs.exists(valid(path))
 end
 fs.isDir=function(path)
-valid(path)
-return rootfs.isDir(chrootpath..path)
+return rootfs.isDir(valid(path))
 end
 fs.isReadOnly=function(path)
-valid(path)
-return rootfs.isReadOnly(chrootpath..path)
+return rootfs.isReadOnly(valid(path))
 end
 fs.getDrive=function(path)
-valid(path)
-return rootfs.getDrive(chrootpath..path)
+return rootfs.getDrive(valid(path))
 end
 fs.getSize=function(path)
-valid(path)
 return rootfs.getSize(chrootpath..path)
 end
 fs.makeDir=function(path)
-valid(path)
-return rootfs.makeDir(chrootpath..path)
+return rootfs.makeDir(valid(path))
 end
 fs.move=function(path, cpath)
-valid(path)
-valid(cpath)
-return rootfs.move(chrootpath..path, chrootpath..cpath)
+return rootfs.move(valid(path), valid(cpath))
 end
 fs.copy=function(path, cpath)
-valid(path)
-valid(cpath)
-return rootfs.copy(chrootpath..path, chrootpath..cpath)
+return rootfs.copy(valid(path), valid(cpath))
 end
 fs.delete=function(path)
-valid(path)
-return rootfs.delete(chrootpath..path)
+return rootfs.delete(valid(path))
 end
 fs.open=function(path, m)
-valid(path)
-return rootfs.open(chrootpath..path, m)
+return rootfs.open(valid(path), m)
 end
