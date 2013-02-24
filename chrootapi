@@ -45,7 +45,7 @@ local xpath=fs.combine(chrootpath, path)
 if starts(xpath, chrootpath) then
 return true
 else
-error("No escaping the chroot jail!")
+error("No escaping the chroot jail! The xpath is "..xpath)
 end
 end
 
