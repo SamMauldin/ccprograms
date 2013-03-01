@@ -24,3 +24,4 @@ else
 error("Updating failed for "..k, 0)
 end
 end
+local updateurl="https://raw.github.com/Sxw1212/ccprograms/master/ccboxupd"
