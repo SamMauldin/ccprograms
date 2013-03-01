@@ -1,0 +1,26 @@
+local args={...}
+if not #args==1 then
+error("Usage: ccbox [folder]",0)
+end
+
+--Download Required API's
+print("Updating...")
+local apis={}
+apis.redirect="http://pastebin.com/raw.php?i=fU9Kj9zr"
+apis.goroutine="http://pastebin.com/raw.php?i=SUW8cq9j"
+apis.chrootapi="https://raw.github.com/Sxw1212/ccprograms/master/chrootapi"
+if not fs.isDir("/.ccbox") then
+fs.delete("/.ccbox")
+fs.makeDir("/.ccbox")
+end
+for k,v in pairs(apis) do
+local req=http.get(v)
+if req then
+local fh=fs.open("/.ccbox/"..k,"w")
+fh.write(req.readAll())
+fh.close()
+os.loadAPI("/.ccbox/"..k)
+else
+error("Updating failed for "..k, 0)
+end
+end
