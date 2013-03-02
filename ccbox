@@ -36,7 +36,11 @@ else
 error("Updating failed for ccboxupd", 0)
 end
 print("Lauching...")
-os.run({}, "/.ccbox/ccboxupd", args[1])
+vmpath=args[1]
+if shell then
+vmpath=shell.resolve(args[1])
+end
+os.run({}, "/.ccbox/ccboxupd", vmpath)
 term.setBackgroundColor(colors.black)
 term.setTextColor(colors.white)
 print("CCBox has exited")
