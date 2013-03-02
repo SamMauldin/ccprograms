@@ -16,7 +16,19 @@ local vmstat="LOADING"
 local x,y=term.getSize()
 local vmredirect=redirect.createRedirectBuffer(x,y-1,colors.white,colors.black,true)
 
+local vmblink=false
+
 local vmsb={}
+
+vmsb.term={}
+
+for k,v in pairs(term) do
+vmsb.term[k]=v
+end
+
+vmsb.term.setCursorBlink=function(bool)
+vmblink=bool
+end
 
 vmsb.os={}
 
@@ -66,6 +78,11 @@ term.setBackgroundColor(colors.lime)
 term.write("B")
 
 vmredirect.blit(1, 1, 1, 1, x, y-1)
+term.setCursorBlink(vmblink)
+if vmblink then
+local cx,cy=vmredirect.getCursorPos()
+term.setCursorPos(cx,cy)
+end
 end
 end
 
@@ -99,10 +116,13 @@ sleep(0.1)
 if vmstat=="Shutting down" then
 goroutine.kill("vm")
 vmstat="Stopped"
+vmblink=false
 elseif vmstat=="Rebooting" then
 vmstat="Booting"
 goroutine.kill("vm")
+vmblink=false
 elseif vmstat=="Booting" then
+vmblink=false
 launchVM()
 end
 end
