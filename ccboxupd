@@ -76,7 +76,7 @@ end
 function doVMPOWER()
 while true do
 sleep(0.1)
-if vmstat="Shutting down" then
+if vmstat=="Shutting down" then
 goroutine.kill("vm")
 vmstat="Stopped"
 else if vmstat="Rebooting" then
