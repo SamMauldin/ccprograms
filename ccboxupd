@@ -16,7 +16,7 @@ local vmstat="LOADING"
 local x,y=term.getSize()
 local vmredirect=redirect.createRedirectBuffer(x,y-1,colors.white,colors.black,true)
 
-local vmblink=false
+local vmblink=true
 
 local vmsb={}
 
