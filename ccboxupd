@@ -20,6 +20,10 @@ local vmsb={}
 
 vmsb.os={}
 
+for k,v in pairs(os) do
+vmsb.os[k]=v
+end
+
 vmsb.os.shutdown=function()
 vmstat="Shutting down"
 while true do
