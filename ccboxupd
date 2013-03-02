@@ -51,8 +51,11 @@ term.write("CCBox:"..vmstat)
 
 term.setCursorPos(x,y)
 term.setBackgroundColor(colors.red)
-term.write("S")
+term.write("X")
 term.setCursorPos(x-1,y)
+term.setBackgroundColor(colors.orange)
+term.write("S")
+term.setCursorPos(x-2,y)
 term.setBackgroundColor(colors.lime)
 term.write("B")
 
@@ -64,8 +67,17 @@ function doEVENT()
 while true do
 local e={ os.pullEvent() }
 if e[1]=="mouse_click" or e[1]=="mouse_drag" then
-if e[3]==y then
---Handle click
+if e[4]==y then
+if e[3]==x then
+--Exit
+vmstat="EXITING"
+elseif e[3]==x-1 then
+--Shutdown VM
+vmstat="Shutting down"
+elseif e[3]==x-2 then
+--Boot VM
+vmstat="Booting"
+end
 else
 goroutine.passEvent()
 end
@@ -101,6 +113,9 @@ goroutine.spawn("tick", doEVENT)
 goroutine.spawn("power", doVMPOWER)
 goroutine.assignEvent("tick","mouse_drag")
 goroutine.assignEvent("tick","mouse_click")
+while not vmstat=="EXITING" do
+sleep(0.1)
+end
 end
 
 goroutine.run(doMAIN)
