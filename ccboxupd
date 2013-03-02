@@ -79,7 +79,7 @@ sleep(0.1)
 if vmstat=="Shutting down" then
 goroutine.kill("vm")
 vmstat="Stopped"
-else if vmstat="Rebooting" then
+else if vmstat=="Rebooting" then
 vmstat="Booting"
 goroutine.kill("vm")
 else if vmstat=="Booting" then
