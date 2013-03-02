@@ -108,7 +108,7 @@ end
 end
 
 function doVM()
-dofile("/rom/programs/shell")
+os.run({}, "/rom/programs/shell")
 os.shutdown()
 end
 
