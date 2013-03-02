@@ -18,14 +18,16 @@ local vmredirect=redirect.createRedirectBuffer(x,y-1,colors.white,colors.black,t
 
 local vmsb={}
 
-vmsb.shutdown=function()
+vmsb.os={}
+
+vmsb.os.shutdown=function()
 vmstat="Shutting down"
 while true do
 coroutine.yield()
 end
 end
 
-vmsb.shutdown=function()
+vmsb.os.reboot=function()
 vmstat="Rebooting"
 while true do
 coroutine.yield()
