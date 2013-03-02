@@ -15,7 +15,7 @@ local vmstat="LOADING"
 
 local x,y=term.getSize()
 local vmredirect=redirect.createRedirectBuffer(x,y-1,colors.white,colors.black,true)
-
+vmredirect.makeActive()
 local vmblink=true
 
 local vmsb={}
@@ -76,11 +76,6 @@ term.write("S")
 term.setCursorPos(x-2,y)
 term.setBackgroundColor(colors.lime)
 term.write("B")
-
-vmredirect.blit(1, 1, 1, 1, x, y-1)
-term.setCursorBlink(vmblink)
-local cx,cy=vmredirect.getCursorPos()
-term.setCursorPos(cx,cy)
 end
 end
 
