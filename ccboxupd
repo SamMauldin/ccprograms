@@ -103,5 +103,5 @@ goroutine.assignEvent("tick","mouse_drag")
 goroutine.assignEvent("tick","mouse_click")
 end
 
-gouroutine.run(doMAIN)
+goroutine.run(doMAIN)
 chrootapi.unchroot(pass)
