@@ -1,0 +1,28 @@
+local args={...}
+
+if not args[1] then
+error("Please specify a vm folder")
+end
+
+vmfolder=args[1]
+if shell then
+vmfolder=shell.resolve(args[1])
+end
+if not fs.isDir(vmfolder) then
+fs.delete(vmfolder)
+fs.makeDir(vmfolder)
+end
+fs.delete(vmfolder.."/rom")
+fs.makeDir(vmfolder.."/rom/programs")
+for k,v in pairs(fs.list("/rom/programs/")) do
+if v=="secret" then
+--Skip
+elseif fs.isDir("/rom/programs/"..v) then
+fs.makeDir(vmfolder.."/rom/programs/"..v)
+for i,file in pairs(fs.list("/rom/programs/"..v)) do
+fs.copy("/rom/programs/"..v.."/"..file, vmfolder.."/rom/programs/"..v.."/"..file)
+end
+else
+fs.copy("/rom/programs/"..v, vmfolder.."/rom/programs/"..v)
+end
+end
