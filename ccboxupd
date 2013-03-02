@@ -25,13 +25,13 @@ local tocopy={"redstone", "gps", "_VERSION", "keys", "printError", "peripheral",
 "colors","vector", "select","paintutils", "fs"} 
 
 for k,v in pairs(tocopy) do
-if type(v)=="table" then
-vmsb[k]={}
-for name,obj in pairs(v) do
-vmsb[k][name]=obj
+if type(_G[v])=="table" then
+vmsb[v]={}
+for name,obj in pairs(_G[v]) do
+vmsb[v][name]=obj
 end
 else
-vmsb[k]=v
+vmsb[v]=_G[v]
 end
 end
 
