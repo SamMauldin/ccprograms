@@ -49,6 +49,9 @@ coroutine.yield()
 end
 end
 
+vmsb.ccbox={}
+--Todo
+
 function launchVM()
 goroutine.kill("vm")
 vmstat="Running"
