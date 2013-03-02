@@ -65,7 +65,7 @@ term.setBackgroundColor(colors.gray)
 term.clearLine()
 term.setCursorPos(1,y)
 
-term.write("CCBox:"..vmstat..":"..vmstat)
+term.write("CCBox:"..vmstat..":"..vmblink)
 
 term.setCursorPos(x,y)
 term.setBackgroundColor(colors.red)
