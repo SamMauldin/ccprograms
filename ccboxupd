@@ -86,6 +86,7 @@ else if vmstat=="Booting" then
 launchVM()
 end
 end
+end
 
 function doVM()
 os.run(vmsb,"/rom/programs/shell")
