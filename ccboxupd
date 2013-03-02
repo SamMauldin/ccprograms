@@ -16,41 +16,22 @@ local vmstat="LOADING"
 local x,y=term.getSize()
 local vmredirect=redirect.createRedirectBuffer(x,y-1,colors.white,colors.black,true)
 
-local vmsb={}
+local oldshutdown=os.shutdown
+local oldreboot=os.reboot
 
-local tocopy={"redstone", "gps", "_VERSION", "keys", "printError", "peripheral","assert", "getfenv",
-"bit", "rawset", "tonumber", "loadstring", "error", "tostring", "type", "coroutine", "disk","next", "unpack",
-"colours", "pcall", "sleep", "loadfile", "math", "pairs", "rawget", "read", "rednet", "ipairs", "xpcall", "os","help",
-"io","rawequal","setfenv","rs","http","write","string","setmetatable","print","getmetatable","table","parallel","dofile","textutils","term",
-"colors","vector", "select","paintutils", "fs"} 
-
-for k,v in pairs(tocopy) do
-if type(_G[v])=="table" then
-vmsb[v]={}
-for name,obj in pairs(_G[v]) do
-vmsb[v][name]=obj
-end
-else
-vmsb[v]=_G[v]
-end
-end
-
-vmsb.os.shutdown=function()
+os.shutdown=function()
 vmstat="Shutting down"
 while true do
 coroutine.yield()
 end
 end
 
-vmsb.os.reboot=function()
+os.reboot=function()
 vmstat="Rebooting"
 while true do
 coroutine.yield()
 end
 end
-
-vmsb.ccbox={}
---Todo
 
 function launchVM()
 goroutine.kill("vm")
@@ -131,8 +112,6 @@ dofile("/rom/programs/shell")
 os.shutdown()
 end
 
-setfenv(doVM, vmsb)
-
 function doMAIN()
 goroutine.spawn("draw", doDRAW)
 goroutine.spawn("tick", doEVENT)
@@ -150,3 +129,6 @@ end
 
 goroutine.run(doMAIN)
 chrootapi.unchroot(pass)
+
+os.reboot=oldreboot
+os.shutdown=oldshutdown
