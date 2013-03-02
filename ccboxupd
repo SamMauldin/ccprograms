@@ -26,13 +26,15 @@ local tocopy={"redstone", "gps", "_VERSION", "keys", "printError", "peripheral",
 
 for k,v in pairs(tocopy) do
 if type(v)=="table" then
+vmsb[k]={}
 for name,obj in pairs(v) do
-vmsb[name]=obj
+vmsb[k][name]=obj
 end
 else
 vmsb[k]=v
 end
 end
+
 vmsb.os.shutdown=function()
 vmstat="Shutting down"
 while true do
