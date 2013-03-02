@@ -113,8 +113,11 @@ goroutine.spawn("tick", doEVENT)
 goroutine.spawn("power", doVMPOWER)
 goroutine.assignEvent("tick","mouse_drag")
 goroutine.assignEvent("tick","mouse_click")
-while not vmstat=="EXITING" do
+while true do
 sleep(0.1)
+if vmstat=="EXITING" then
+return
+end
 end
 end
 
