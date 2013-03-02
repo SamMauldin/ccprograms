@@ -16,6 +16,7 @@ end
 for k,v in pairs(apis) do
 local req=http.get(v)
 if req then
+fs.delete("/.ccbox/"..k)
 local fh=fs.open("/.ccbox/"..k,"w")
 fh.write(req.readAll())
 fh.close()
@@ -25,3 +26,17 @@ error("Updating failed for "..k, 0)
 end
 end
 local updateurl="https://raw.github.com/Sxw1212/ccprograms/master/ccboxupd"
+local req=http.get(updateurl)
+if req then
+fs.delete("/.ccbox/ccboxupd")
+local fh=fs.open("/.ccbox/ccboxupd","w")
+fh.write(req.readAll())
+fh.close()
+else
+error("Updating failed for ccboxupd", 0)
+end
+print("Lauching...")
+os.run({}, "/.ccbox/ccboxupd", args[1])
+term.setBackgroundColor(colors.black)
+term.setTextColor(colors.white)
+print("CCBox has exited")

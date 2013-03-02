@@ -1,0 +1,104 @@
+local args={...}
+print("Building vm for "..args[1])
+local vm=args[1]
+if not fs.isDir(vm) then
+error("Please ensure that the folder passed is a folder", 0)
+end
+local pass="CCBOX:"..math.random()
+chrootapi.chroot(vm, pass)
+if not fs.exists("/rom/programs/shell") then
+chrootapi.unchroot(pass)
+error("Please ensure that the folder passed contains /rom/programs/shell", 0)
+end
+
+local vmstat="LOADING"
+
+local x,y=term.getSize()
+local vmredirect=redirect.createRedirectBuffer(x,y-1,colors.white,colors.black,true)
+
+local vmsb={}
+
+vmsb.shutdown=function()
+vmstat="Shutting down"
+while true do
+coroutine.yield()
+end
+end
+
+vmsb.shutdown=function()
+vmstat="Rebooting"
+while true do
+coroutine.yield()
+end
+end
+
+function launchVM()
+goroutine.kill("vm")
+vmstat="Running"
+goroutine.spawnWithRedirect("vm",doVM,vmredirect)
+end
+
+function doDRAW()
+while true do
+sleep(0.01)
+
+term.setCursorPos(1,y)
+term.setBackgroundColor(colors.gray)
+term.clearLine()
+term.setCursorPos(1,y)
+
+term.write("CCBox:"..vmstat)
+
+term.setCursorPos(x,y)
+term.setBackgroundColor(colors.red)
+term.write("S")
+term.setCursorPos(x-1,y)
+term.setBackgroundColor(colors.lime)
+term.write("B")
+
+vmredirect.blit(1, 1, 1, 1, x, y-1)
+end
+end
+
+function doEVENT()
+local e={ os.pullEvent() }
+if e[1]=="mouse_click" or e[1]=="mouse_drag" then
+if e[3]==y then
+--Handle click
+else
+goroutine.passEvent()
+end
+else
+goroutine.passEvent()
+end
+end
+
+function doVMPOWER()
+while true do
+sleep(0.1)
+if vmstat="Shutting down" then
+goroutine.kill("vm")
+vmstat="Stopped"
+else if vmstat="Rebooting" then
+vmstat="Booting"
+goroutine.kill("vm")
+else if vmstat=="Booting" then
+launchVM()
+end
+end
+
+function doVM()
+os.run(vmsb,"/rom/programs/shell")
+vmstat="Stopped"
+end
+
+function doMAIN()
+goroutine.spawn("draw", doDRAW)
+goroutine.spawn("tick", doEVENT)
+goroutine.spawn("power", doVMPOWER)
+goroutine.assignEvent("tick","mouse_drag")
+goroutine.assignEvent("tick","mouse_click")
+end
+
+gouroutine.run(doMAIN)
+chrootapi.unchroot(pass)
