@@ -33,7 +33,6 @@ else
 vmsb[k]=v
 end
 end
-
 vmsb.os.shutdown=function()
 vmstat="Shutting down"
 while true do
