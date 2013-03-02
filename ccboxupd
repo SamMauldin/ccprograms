@@ -59,7 +59,7 @@ function doDRAW()
 while true do
 sleep(0.01)
 
-vmredirect.blit(1,1,1,1,x,y-1)
+vmredirect.blit()
 
 term.setCursorPos(1,y)
 term.setBackgroundColor(colors.gray)
