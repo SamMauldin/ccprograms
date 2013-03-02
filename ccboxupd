@@ -79,10 +79,8 @@ term.write("B")
 
 vmredirect.blit(1, 1, 1, 1, x, y-1)
 term.setCursorBlink(vmblink)
-if vmblink then
 local cx,cy=vmredirect.getCursorPos()
 term.setCursorPos(cx,cy)
-end
 end
 end
 
