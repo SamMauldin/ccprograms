@@ -1,6 +1,7 @@
 local chrooted=false
 local chrootpath=""
 local chrootpass=nil
+local fscombine=fs.combine
 local rootfs = {}
 
 for k,v in pairs(fs) do
@@ -45,7 +46,7 @@ local function starts(String,Start)
 end
 --BEGIN
 local function valid(path)
-local xpath=fs.combine(chrootpath, path)
+local xpath=fscombine(chrootpath, path)
 if starts(xpath, chrootpath) then
 return xpath
 else

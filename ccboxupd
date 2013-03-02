@@ -18,10 +18,20 @@ local vmredirect=redirect.createRedirectBuffer(x,y-1,colors.white,colors.black,t
 
 local vmsb={}
 
-vmsb.os={}
+local tocopy={"redstone", "gps", "_VERSION", "keys", "printError", "peripheral","assert", "getfenv",
+"bit", "rawset", "tonumber", "loadstring", "error", "tostring", "type", "coroutine", "disk","next", "unpack",
+"colours", "pcall", "sleep", "loadfile", "math", "pairs", "rawget", "read", "rednet", "ipairs", "xpcall", "os","help",
+"io","rawequal","setfenv","rs","http","write","string","setmetatable","print","getmetatable","table","parallel","dofile","textutils","term",
+"colors","vector", "select","paintutils", "fs"} 
 
-for k,v in pairs(os) do
-vmsb.os[k]=v
+for k,v in pairs(tocopy) do
+if type(v)=="table" then
+for name,obj in pairs(v) do
+vmsb[name]=obj
+end
+else
+vmsb[k]=v
+end
 end
 
 vmsb.os.shutdown=function()
@@ -113,9 +123,11 @@ end
 end
 
 function doVM()
-os.run(vmsb,"/rom/programs/shell")
-vmstat="Stopped"
+dofile("/rom/programs/shell")
+os.shutdown()
 end
+
+setfenv(doVM, vmsb)
 
 function doMAIN()
 goroutine.spawn("draw", doDRAW)
