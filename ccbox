@@ -6,8 +6,8 @@ end
 --Download Required API's
 print("Updating...")
 local apis={}
-apis.redirect="http://pastebin.com/raw.php?i=fU9Kj9zr"
-apis.goroutine="http://pastebin.com/raw.php?i=SUW8cq9j"
+apis.redirect="https://raw.github.com/Sxw1212/ccprograms/master/gopher/redirect"
+apis.goroutine="https://raw.github.com/Sxw1212/ccprograms/master/gopher/goroutine"
 apis.chrootapi="https://raw.github.com/Sxw1212/ccprograms/master/chrootapi"
 if not fs.isDir("/.ccbox") then
 fs.delete("/.ccbox")
