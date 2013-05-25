@@ -23,6 +23,8 @@ if draw then
 end
 local vmredirect=redirect.createRedirectBuffer(x,y,colors.white,colors.black,true)
 
+if draw then
+
 local oldshutdown=os.shutdown
 local oldreboot=os.reboot
 
@@ -38,6 +40,8 @@ vmstat="Rebooting"
 while true do
 coroutine.yield()
 end
+end
+
 end
 
 function launchVM()
