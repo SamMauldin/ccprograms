@@ -88,9 +88,9 @@ fs.open=function(path, m)
 return rootfs.open(valid(path), m)
 end
 
-fs.secret=function(){
-local longtimeago=rootfs.open("/rom/programs/secret/alongtimeago","r")
-local prog=loadstring(longtimeago.readAll())
-longtimeago.close()
-return prog
-}
+fs.secret=function()
+	local longtimeago=rootfs.open("/rom/programs/secret/alongtimeago","r")
+	local prog=loadstring(longtimeago.readAll())
+	longtimeago.close()
+	return prog
+end
