@@ -1,0 +1,1025 @@
+--Check for advanced computer
+
+if not term.isColor() then
+error("Advanced computer required")
+end
+
+--Serialize API by Immibis
+
+local function serializeInt(i)
+        local s = ""
+        repeat
+                s = s .. string.char((i % 128) + ((i >= 128) and 128 or 0))
+                i = math.floor(i / 128)
+        until i == 0
+        return s
+end
+-- returns int, next position
+local function deserializeInt(s,pos)
+        local k = pos
+        local i = 0
+        local m = 1
+        while true do
+                local b = string.byte(s:sub(k,k))
+                i = i + m * (b % 128)
+                m = m * 128
+                k = k + 1
+                if b < 128 then break end
+        end
+        return i, k
+end
+
+local nextid_key = {}
+local function serializeInternal(obj, seen)
+        if obj ~= nil and seen[obj] then
+                return "06" .. serializeInt(seen[obj])
+        end
+        if type(obj) == "table" then
+                local id = seen[nextid_key]
+                seen[nextid_key] = id + 1
+                seen[obj] = id
+
+                local s = "05"
+                local ikeys = {}
+                for k,v in ipairs(obj) do
+                        ikeys[k] = v
+                        s = s .. serializeInternal(v, seen)
+                end
+                s = s .. serializeInternal(nil, seen)
+                for k,v in pairs(obj) do
+                        if ikeys[k] == nil then
+                                s = s .. serializeInternal(k, seen) .. serializeInternal(v, seen)
+                        end
+                end
+                s = s .. serializeInternal(nil, seen)
+                return s
+        elseif type(obj) == "number" then
+                local ns = tostring(obj)
+                return "04" .. serializeInt(ns:len()) .. ns
+        elseif type(obj) == "string" then
+                return "03" .. serializeInt(obj:len()) .. obj
+        elseif type(obj) == "boolean" then
+                if obj then
+                        return "01"
+                else
+                        return "02"
+                end
+        elseif type(obj) == "nil" then
+                return "00"
+        elseif type(obj) == "userdata" then
+                error("cannot serialize userdata")
+        elseif type(obj) == "thread" then
+                error("cannot serialize threads")
+        elseif type(obj) == "function" then
+                error("cannot serialize functions")
+        else
+                error("unknown type: " .. type(obj))
+        end
+end
+function serialize(obj)
+        return serializeInternal(obj, {[nextid_key] = 0})
+end
+function deserialize(s)
+        local pos = 1
+        local seen = {}
+        local nextid = 0
+        local function internal()
+                local tch = s:sub(pos,pos)
+                local len
+                pos = pos + 1
+                if tch == "00" then
+                        return nil
+                elseif tch == "01" then
+                        return true
+                elseif tch == "02" then
+                        return false
+                elseif tch == "03" then
+                        len, pos = deserializeInt(s, pos)
+                        local rv = s:sub(pos, pos+len-1)
+                        pos = pos + len
+                        return rv
+                elseif tch == "04" then
+                        len, pos = deserializeInt(s, pos)
+                        local rv = s:sub(pos, pos+len-1)
+                        pos = pos + len
+                        return tonumber(rv)
+                elseif tch == "05" then
+                        local id = nextid
+                        nextid = id + 1
+                        local t = {}
+                        seen[id] = t
+
+                        local k = 1
+                        while true do
+                                local v = internal()
+                                if v == nil then break end
+                                t[k] = v
+                                k = k + 1
+                        end
+
+                        while true do
+                                local k = internal()
+                                if k == nil then break end
+                                local v = internal()
+                                if v == nil then break end
+                                t[k] = v
+                        end
+                        return t
+                elseif tch == "06" then
+                        local id
+                        id, pos = deserializeInt(s, pos)
+                        return seen[id]
+                else
+                        return nil
+                end
+        end
+        return internal()
+end
+
+--GopherATL's goroutine and redirect
+
+--[[  goroutine API
+
+Simple interface for multitasking with coroutines. 
+--]]
+
+local gotTerminate=false
+local active
+local loaded=false
+
+local termNative={
+  restore=term.restore,
+  redirect=term.redirect,
+}
+
+function isActive()
+  return active
+end
+
+local activeRoutines = { }
+local eventAssignments = { }
+local entryRoutine
+local rootRoutine
+local passEventTo=nil
+local numActiveCoroutines=0
+local isRunning=false
+
+function getInternalState()
+  return active, activeRoutines,eventAssignments,entryRoutine,
+    rootRoutine,passEventTo,numActiveCoroutines,isRunning
+end
+
+if goroutine then
+  active, activeRoutines,eventAssignments,entryRoutine,
+  rootRoutine,passEventTo,numActiveCoroutines,isRunning=goroutine.getInternalState()
+  
+else
+  active=false
+  activeRoutines = { }
+  eventAssignments = { }
+  entryRoutine=nil
+  rootRoutine=nil
+  passEventTo=nil
+  numActiveCoroutines=0
+  isRunning=false
+end
+
+loaded=true
+
+local function findCoroutine(co)
+  for _,routine in pairs(activeRoutines) do
+    if routine.co==co then
+      return routine
+    end
+  end
+  return nil
+end
+
+function findNamedCoroutine(name)
+  return activeRoutines[name]
+end
+
+function running()
+  return findCoroutine(coroutine.running())
+end
+
+local function validateCaller(funcName)
+  local callingRoutine=running()  
+  if callingRoutine==nil then
+    error(funcName.." can only be called by a coroutine running under goroutine!")
+  end
+  return callingRoutine
+end
+
+function assignEvent(assignTo,event,...)  
+  --get the routine calling this funciton
+  local callingRoutine=validateCaller("assignEvent")
+  if callingRoutine~=entryRoutine then
+    return false, "assignEvent: only main routine, passed to run(..), can assign events!"
+  end
+  --get the assignee
+  local assignee=callingRoutine
+  if assignTo~=nil and assignTo~=callingRoutine.name then
+    assignee=findNamedCoroutine(assignTo)
+    if assignee==nil then
+      return false, "assignEvent: named coroutine not found!"
+    end
+  end
+    
+  --is this event already assigned elsewhere?
+  if eventAssignments[event]~=nil then  
+    return false,"This event assignment conflicts with an existing assignment!"
+  end    
+  --still here? good, no conflict then
+  eventAssignments[event]={co=assignee,assignedBy=callingRoutine}
+  return true
+end
+
+function passEvent(passTo)
+  if passTo==nil then
+    passEventTo=""
+  else
+    passEventTo=passTo
+  end
+end
+
+  
+function releaseEvent(event)
+  local callingRoutine=validateCaller("releaseEvent")  
+  local ass=eventAssignments[event]
+  
+  if ass~=nil then
+    if caller.co~=entryRoutine and caller~=ass.assignedBy and caller~=ass.routine then
+      return false, "Event can only be released by the assigner, assignee, or the entry routine!"
+    end
+    table.remove(eventAssignments,i)
+    return true
+  end
+  return false
+end
+  
+--called by goroutines to wait for an event to occur with some 
+--set of optional event parameter filters
+function waitForEvent(event,...)  
+  co=validateCaller("waitForEvent")
+  co.filters={event,...}
+  return coroutine.yield("goroutine_listening")
+  
+end
+
+
+local function matchFilters(params,routine)
+  if params[1]=="terminate" then
+    return true
+  end
+  for j=1,#params do
+    if routine==nil or (routine.filters and routine.filters[j]~=nil and routine.filters[j]~=params[j]) then
+      return false
+    end
+  end
+  return true
+end
+
+
+local function sendEventTo(routine, params)
+  if routine.dead then
+    return
+  end
+  
+  termNative.redirect(routine.redirect[#routine.redirect])
+  local succ,r1=coroutine.resume(routine.co,unpack(params))
+  termNative.restore()
+  
+  --did it die or terminate?
+  if succ==false or coroutine.status(routine.co)=="dead" then
+    --it's dead, remove it from active
+    --if there's an error, send coroutine_error
+    if r1~=nil then
+      os.queueEvent("coroutine_error",routine.name,r1)
+    end    
+    --send coroutine_end
+    routine.dead=true
+  --not dead, is it waiting for an event?
+  else
+    --"goroutine_listening" indicates it yielded via coroutine.waitForEvent
+    --which has had filters set already
+    if r1~="goroutine_listening" then
+      --Add to eventListeners
+      routine.filters={r1}
+    end
+  end
+end
+
+local function _spawn(name,method,redirect,parent,args)
+    if activeRoutines[name] then
+      return nil, "Couldn't spawn; a coroutine with that name already exists!"
+    end
+    
+    local routine={name=name,co=coroutine.create(method),redirect={redirect}, parent=parent,children={}}
+    if routine.co==nil then
+      error("Failed to create coroutine '"..name.."'!")
+    end
+    parent.children[#parent.children+1]=routine
+    activeRoutines[name]=routine
+    os.queueEvent("coroutine_start",name)
+
+
+    numActiveCoroutines=numActiveCoroutines+1
+    --run it a bit..
+    sendEventTo(routine,args)
+        
+    return routine
+end
+
+function spawnWithRedirect(name,method,redirect,...)
+  return _spawn(name,method,redirect,running(),{...})
+end
+
+local mon=peripheral.wrap("right")
+
+function spawn(name,method,...)
+  local cur=running()
+  
+  return _spawn(name,method,cur.redirect[1],cur,{...})
+end
+
+local nilRedir = {
+  write = function() end,
+  getCursorPos = function() return 1,1 end,
+  setCursorPos = function() end,
+  isColor = function() return false end,
+  scroll = function() end,
+  setCursorBlink = function() end,
+  setTextColor = function() end,
+  getTextColor = function() end,
+  getTextSize = function() end,
+  setTextScale = function() end,
+  clear = function() end,
+  clearLine = function() end,
+  
+}
+
+function spawnBackground(name,method,...)
+  return _spawn(name,method,nilRedir,rootRoutine,{...})
+end
+
+function spawnPeer(name,method,...)
+  local cur=running()
+  return _spawn(name,method,cur.redirect[1],cur.parent,{...})
+end
+
+function spawnPeerWithRedirect(name,method,redirect,...)
+  local cur=running()
+  return _spawn(name,method,redirect,cur.parent,{...})
+end
+
+function spawnProgram(name,progName,...)
+  local cur=running()
+  return _spawn(name, function(...) os.run({}, ...) end,cur.redirect[1],cur,{...})
+end
+
+
+function list()
+  local l={}
+  local i=1
+  for name,_ in pairs(activeRoutines) do
+    l[i]=name
+    i=i+1
+  end
+  return l
+end
+
+function kill(name)
+  local routine=validateCaller("killCoroutine")
+  if not routine then
+    return false, "Must be called from a coroutine. How'd you even manage this?"
+  end
+  local target=findNamedCoroutine(name)
+  if target then
+    if routine==target then
+      return false,"You can't commit suicide!"
+    end
+    --mark it dead
+    target.dead=true
+    return true
+  end
+  return false, "coroutine not found"
+end
+
+
+local function logCoroutineErrors()
+  while true do
+    local _, name, err=os.pullEventRaw("coroutine_error")
+    if _~="terminate" then
+      local file=fs.open("go.log","a")
+      file.write("coroutine '"..tostring(name).."' crashed with the following error: "..tostring(err).."\n")
+      file.close()
+    end
+  end
+end
+
+function run(main,terminable,...)
+  if isRunning then
+    --spawn it
+    local cur=running()
+    local name="main"
+    local i=1
+    while activeRoutines[name] do
+      i=i+1
+      name="main"..i
+    end
+    if _spawn(name,main,cur.redirect[1],cur,{...}) then
+      --wait for it to die
+      while true do 
+        local e={os.pullEventRaw()}
+        if e[1]=="coroutine_end" and e[2]==name then
+          return
+        elseif e[1]=="coroutine_error" and e[2]==name then
+          error(e[3])
+          return  
+        end
+      end
+    else
+      error("Couldn't spawn main coroutine "..name.."!")
+    end
+    
+  end
+  
+  --hook term.redirect and term.restore
+  local function term_redirect(target)
+    --push redirect to current term's stack
+    local co=running()
+    co.redirect[#co.redirect+1]=target
+    --undo the current redirection then redirect
+    termNative.restore()
+    termNative.redirect(target)
+  end
+
+  local function term_restore()
+    local co=running()
+    --do nothing unless they've got more than 1 redirect in their stack
+    if #co.redirect>1 then
+      table.remove(co.redirect,#co.redirect)
+      --undo current redirection and restore to new end of stack
+      termNative.restore()
+      termNative.redirect(co.redirect[#co.redirect])
+    end
+  end
+
+  termNative.redirect=term.redirect
+  termNative.restore=term.restore
+  term.redirect=term_redirect
+  term.restore=term_restore
+  
+    
+  --make the object for the root coroutine (this one)
+  rootRoutine={
+    co=coroutine.running(),
+    name="root",
+    redirect={term.native},
+    parent=nil,   
+    children={}
+  }
+  
+  isRunning=true
+  --default terminable to true
+  if terminable==nil then 
+    terminable=true 
+  end
+  
+  --start the main coroutine for the process
+  entryRoutine=_spawn("main",main,term.native,rootRoutine,{...})
+  --begin with routine 1
+  --gooo!
+  local params={}
+  while numActiveCoroutines>0 do      
+    --grab an event
+    params={os.pullEventRaw()}
+    if terminable and params[1]=="terminate" then  
+      gotTerminate=true
+    end
+    local assigned=eventAssignments[params[1]]~=nil
+    local assignedTo=assigned and eventAssignments[params[1]].co or nil
+    local alreadyHandledBy={}
+    --set passTo to empty string, meaning anyone listening
+    passEventTo=""
+    while assignedTo~=nil do
+      --set this to nil first
+      passEventTo=nil
+      --send to assigned guy, if he matches, else break
+      if matchFilters(params,assignedTo) then
+        sendEventTo(assignedTo,params)
+      else
+        passEventTo=""
+        break
+      end
+      --add him to the list of guys who've handled this already
+      alreadyHandledBy[assignedTo]=true
+      --set assignedTo to whatever passTo was
+      if passEventTo=="" then
+        assignedTo=nil
+      elseif passEventTo~=nil then
+        assignedTo=findNamedCoroutine(passEventTo)
+      else
+        assignedTo=nil
+      end
+    end
+    --if it was assigned to nobody, or they passed to everybody..
+    if passEventTo=="" then
+      for _,routine in pairs(activeRoutines) do
+        --if they haven't handled it already via assignments above..
+        if not alreadyHandledBy[routine] and not routine.dead then
+          local match=matchFilters(params,routine)
+          --if it matched, or this routine has never run...
+          if match then
+            sendEventTo(routine,params)
+          end        
+        end
+      end
+    end
+    --clean up any dead coroutines
+    local dead={}
+    local function listChildren(routine,list)
+      for i=1,#routine.children do
+        if not routine.children[i].dead then
+          list[routine.children[i].name]=routine.children[i]
+          listChildren(routine.children[i],list)
+        end
+      end
+    end
+    for name,routine in pairs(activeRoutines) do
+      if routine.dead then
+        dead[name]=routine
+        listChildren(routine,dead)
+      end
+    end
+    for name,routine in pairs(dead) do
+      os.queueEvent("coroutine_end",routine.name)
+      activeRoutines[name]=nil
+      numActiveCoroutines=numActiveCoroutines-1
+      local parent=routine.parent
+      if not parent.dead then
+        --find and remove from children
+        for i=1,#parent.children do
+          if parent.children[i]==routine then
+            table.remove(parent.children,i)
+            break
+          end
+        end
+      end
+    end
+    
+    --release all events assigned to dead coroutines
+    local remove={}
+    for k,v in pairs(eventAssignments) do      
+      if dead[eventAssignments[k].co.name] then
+        table.insert(remove,k)
+      end
+    end
+    
+    for i=1,#remove do
+      eventAssignments[remove[i]]=nil
+    end
+  end
+  
+  --Should I send every remaining process a terminate event, regardless 
+  --of what they were waiting on, so they can do cleanup? Could cause
+  --errors in some cases...
+  --[[
+  for k,v in activeRoutines do
+    coroutine.resume(v.co,"terminate")
+  end
+  --]]
+  
+  activeRoutines={}
+  eventAssignments = { }
+  passEventTo=nil
+  entryRoutine=nil  
+  rootRoutine=nil
+  isRunning=false
+
+  --remove hooks from term.redirect and .restore
+  term.redirect=termNative.redirect
+  term.restore=termNative.restore
+  
+end
+
+function launch(sh)
+  if not active then
+    active=true
+    sh=sh or "rom/programs/shell"
+    term.clear()
+    term.setCursorPos(1,1)
+    run(
+      function() 
+        spawnBackground("errLogger",logCoroutineErrors)
+        os.run({},sh)
+      end
+    )
+    os.shutdown()
+  end
+end
+
+local trueCursor={term.getCursorPos()}
+
+local redirectBufferBase = {
+    write=
+      function(buffer,...)
+        local cy=buffer.curY
+        if cy>0 and cy<=buffer.height then
+          local text=table.concat({...}," ")
+          local cx=buffer.curX
+          local px, py
+          if buffer.isActive and not buffer.cursorBlink then
+            term.native.setCursorPos(cx+buffer.scrX, cy+buffer.scrY)
+          end
+          for i=1,#text do
+            if cx<=buffer.width then
+              local curCell=buffer[cy][cx]
+              local char,textColor,backgroundColor=string.char(text:byte(i)),buffer.textColor,buffer.backgroundColor
+              if buffer[cy].isDirty or curCell.char~=char or curCell.textColor~=textColor or curCell.backgroundColor~=backgroundColor then
+                buffer[cy][cx].char=char
+                buffer[cy][cx].textColor=textColor
+                buffer[cy][cx].backgroundColor=backgroundColor
+                buffer[cy].isDirty=true
+              end
+            end
+            cx=cx+1
+          end
+          buffer.curX=cx
+          if buffer.isActive then
+            buffer.drawDirty()
+            if not buffer.cursorBlink then
+              trueCursor={cx+buffer.scrX-1,cy+buffer.scrY-1}
+              term.native.setCursorPos(unpack(trueCursor))
+            end
+          end
+        end
+      end,
+      
+    setCursorPos=
+      function(buffer,x,y)
+        buffer.curX=math.floor(x)
+        buffer.curY=math.floor(y)
+        if buffer.isActive and buffer.cursorBlink then
+          term.native.setCursorPos(x+buffer.scrX-1,y+buffer.scrY-1)
+          trueCursor={x+buffer.scrX-1,y+buffer.scrY-1}
+        end
+      end,
+      
+    getCursorPos=
+      function(buffer)
+        return buffer.curX,buffer.curY
+      end,
+      
+    scroll=
+      function(buffer,offset)
+        for j=1,offset do
+          local temp=table.remove(buffer,1)
+          table.insert(buffer,temp)
+          for i=1,#temp do
+            temp[i].char=" "
+            temp[i].textColor=buffer.textColor
+            temp[i].backgroundColor=buffer.backgroundColor
+          end
+        end
+        if buffer.isActive then
+          term.redirect(term.native)
+          buffer.blit()
+          term.restore()
+        end
+      end,
+      
+    isColor=
+      function(buffer)
+        return buffer._isColor
+      end,
+      
+    isColour=
+      function(buffer)
+        return buffer._isColor
+      end,
+      
+    clear=
+      function(buffer)
+        for y=1,buffer.height do
+          for x=1,buffer.width do
+            buffer[y][x]={char=" ",textColor=buffer.textColor,backgroundColor=buffer.backgroundColor}
+          end
+        end
+        if buffer.isActive then
+          term.redirect(term.native)
+          buffer.blit()
+          term.restore()
+        end
+      end,
+      
+    clearLine=
+      function(buffer)
+        local line=buffer[buffer.curY]
+        local fg,bg = buffer.textColor, buffer.backgroundColor
+        for x=1,buffer.width do
+          line[x]={char=" ",textColor=fg,backgroundColor=bg}
+        end
+        buffer[buffer.curY].isDirty=true
+        if buffer.isActive then
+          buffer.drawDirty()
+        end
+      end,
+      
+    setCursorBlink=
+      function(buffer,onoff)
+        buffer.cursorBlink=onoff
+        if buffer.isActive then
+          term.native.setCursorBlink(onoff)
+          if onoff then
+            term.native.setCursorPos(buffer.curX,buffer.curY)
+            trueCursor={buffer.curX,buffer.curY}
+          end
+        end
+      end,
+      
+    getSize=
+      function(buffer)
+        return buffer.width, buffer.height
+      end,
+      
+    setTextColor=
+      function(buffer,color)
+        buffer.textColor=color
+        if buffer.isActive then
+          if term.native.isColor() or color==colors.black or color==colors.white then
+            term.native.setTextColor(color)
+          end
+        end
+      end,
+      
+    setTextColour=
+      function(buffer,color)
+        buffer.textColor=color
+        if buffer.isActive then
+          if term.native.isColor() or color==colors.black or color==colors.white then
+            term.native.setTextColor(color)
+          end
+        end
+      end,
+      
+    setBackgroundColor=
+      function(buffer,color)
+        buffer.backgroundColor=color
+        if buffer.isActive then
+          if term.native.isColor() or color==colors.black or color==colors.white then
+        term.native.setBackgroundColor(color)
+          end
+        end
+      end,
+      
+    setBackgroundColour=
+      function(buffer,color)
+        buffer.backgroundColor=color
+        if buffer.isActive then
+          if term.native.isColor() or color==colors.black or color==colors.white then
+        term.native.setBackgroundColor(color)
+          end
+        end
+      end,
+    
+    resize=
+      function(buffer,width,height)
+        if buffer.width~=width or buffer.height~=height then
+          local fg, bg=buffer.textColor, buffer.backgroundColor
+          if width>buffer.width then
+            for y=1,buffer.height do
+              for x=#buffer[y]+1,width do
+                buffer[y][x]={char=" ",textColor=fg,backgroundColor=bg}
+              end
+            end
+          end
+
+          if height>buffer.height then
+            local w=width>buffer.width and width or buffer.width
+            for y=#buffer+1,height do
+              local row={}           
+              for x=1,width do
+                row[x]={char=" ",textColor=fg,backgroundColor=bg}
+              end
+              buffer[y]=row
+            end
+          end
+          buffer.width=width
+          buffer.height=height
+        end
+      end,
+      
+    blit=
+      function(buffer,sx,sy,dx, dy, width,height)
+        sx=sx or 1
+        sy=sy or 1
+        dx=dx or buffer.scrX
+        dy=dy or buffer.scrY
+        width=width or buffer.width
+        height=height or buffer.height
+        
+        local h=sy+height>buffer.height and buffer.height-sy or height-1
+        for y=0,h do
+          local row=buffer[sy+y]
+          local x=0
+          local cell=row[sx]
+          local fg,bg=cell.textColor,cell.backgroundColor
+          local str=""
+          local tx=x
+          while true do
+            str=str..cell.char
+            x=x+1
+            if x==width or sx+x>buffer.width then
+              break
+            end
+            cell=row[sx+x]
+            if cell.textColor~=fg or cell.backgroundColor~=bg then
+              --write
+              term.setCursorPos(dx+tx,dy+y)
+              term.setTextColor(fg)
+              term.setBackgroundColor(bg)
+              term.write(str)
+              str=""
+              tx=x
+              fg=cell.textColor
+              bg=cell.backgroundColor              
+            end
+          end 
+          term.setCursorPos(dx+tx,dy+y)
+          term.setTextColor(fg)
+          term.setBackgroundColor(bg)
+          term.write(str)
+        end
+      end,
+      
+    drawDirty =
+      function(buffer)
+        term.redirect(term.native)
+        for y=1,buffer.height do
+          if buffer[y].isDirty then
+            term.redirect(term.native)
+            buffer.blit(1,y,buffer.scrX,buffer.scrY+y-1,buffer.width,buffer.height)
+            term.restore()
+            buffer[y].isDirty=false
+          end
+        end
+        term.restore()
+      end,
+      
+    makeActive =
+      function(buffer,posX, posY)
+        posX=posX or 1
+        posY=posY or 1
+        buffer.scrX=posX
+        buffer.scrY=posY
+        term.redirect(term.native)
+        buffer.blit(1,1,posX,posY,buffer.width,buffer.height)
+        term.setCursorPos(buffer.curX,buffer.curY)
+        term.setCursorBlink(buffer.cursorBlink)
+        term.setTextColor(buffer.textColor)
+        term.setBackgroundColor(buffer.backgroundColor)
+        buffer.isActive=true
+        term.restore()
+      end,
+      
+    isBuffer = true,
+    
+  }
+    
+
+function createRedirectBuffer(width,height,fg,bg,isColor)
+   bg=bg or colors.black
+   fg=fg or colors.white
+   isColor=isColor~=nil and isColor or term.isColor()
+   local buffer={}
+   
+   do 
+     local w,h=term.getSize()
+     width,height=width or w,height or h
+   end
+   
+   for y=1,height do
+     local row={}
+     for x=1,width do
+       row[x]={char=" ",textColor=fg,backgroundColor=bg}
+     end
+     buffer[y]=row
+   end
+   buffer.scrX=1
+   buffer.scrY=1
+   buffer.width=width
+   buffer.height=height
+   buffer.cursorBlink=false
+   buffer.textColor=fg
+   buffer.backgroundColor=bg
+   buffer._isColor=isColor
+   buffer.curX=1
+   buffer.curY=1
+   
+   local meta={}
+   local function wrap(f,o)
+     return function(...)
+         return f(o,...)
+       end
+   end
+   for k,v in pairs(redirectBufferBase) do
+     if type(v)=="function" then
+       meta[k]=wrap(v,buffer)
+     else
+       meta[k]=v
+     end
+   end
+   setmetatable(buffer,{__index=meta})
+   return buffer
+end
+
+function centerPrint(msg)
+msgLen = string.len(msg)
+screenWidth,_ = term.getSize()
+xCoords = tonumber(math.ceil((screenWidth / 2) - (msgLen / 2)))
+_,termY = term.getCursorPos()
+term.setCursorPos(xCoords,termY)
+print(msg)
+return xCoords
+end
+
+function connect()
+term.setBackgroundColor(colors.white)
+term.clear()
+term.setCursorPos(1,1)
+term.setTextColor(colors.blue)
+centerPrint("CCViewer by Sxw1212")
+
+term.setCursorPos(1,3)
+term.setBackgroundColor(colors.green)
+term.clearLine()
+write("ID Code:")
+local id=read()
+term.setBackgroundColor(colors.white)
+term.clear()
+term.setCursorPos(1,1)
+term.setTextColor(colors.blue)
+centerPrint("CCViewer by Sxw1212")
+term.setCursorPos(1,3)
+print("Connecting...")
+end
+
+function host()
+term.setBackgroundColor(colors.white)
+term.clear()
+term.setCursorPos(1,1)
+term.setTextColor(colors.blue)
+centerPrint("CCViewer by Sxw1212")
+
+term.setCursorPos(1,3)
+centerPrint("ID Code:"..os.getComputerID())
+term.setCursorPos(1,4)
+centerPrint("Waiting for connect...")
+for k,v in pairs(rs.getSides())
+local listening=true
+while listening do
+local e={os.pullEvent("modem_message")}
+end
+end
+
+term.setBackgroundColor(colors.white)
+
+term.clear()
+term.setCursorPos(1,1)
+term.setTextColor(colors.blue)
+centerPrint("CCViewer by Sxw1212")
+term.setCursorPos(1,3)
+term.setBackgroundColor(colors.green)
+term.setTextColor(colors.white)
+term.clearLine()
+centerPrint("Host")
+term.setCursorPos(1,5)
+term.clearLine()
+centerPrint("Connect")
+term.setCursorPos(1,7)
+term.setBackgroundColor(colors.red)
+term.clearLine()
+centerPrint("Exit")
+
+local looping=true
+while looping do
+local e={os.pullEvent("mouse_click")}
+if e[4]==3 then
+--Host
+looping=false
+host()
+elseif e[4]==5 then
+--Connect
+looping=false
+connect()
+elseif e[4]==7 then
+--Exit
+looping=false
+end
+end
+term.setTextColor(colors.white)
+term.setTextColor(colors.black)
+term.clear()
+term.setCursorPos(1,1)

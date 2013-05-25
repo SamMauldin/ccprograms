@@ -38,9 +38,9 @@ end
 print("Lauching...")
 vmpath=args[1]
 if shell then
-vmpath=shell.resolve(args[1])
+args[1]=shell.resolve(args[1])
 end
-os.run({}, "/.ccbox/ccboxupd", vmpath)
+os.run({}, "/.ccbox/ccboxupd", unpack(args))
 term.setBackgroundColor(colors.black)
 term.setTextColor(colors.white)
 print("CCBox has exited")

@@ -1,0 +1,30 @@
+door=""
+
+for k,v in pairs(rs.getSides()) do
+pcall(rednet.open, v)
+end
+mini.clear()
+print("Rebelz Security")
+print("Please right click on the player detector")
+local e,p=os.pullEvent("player")
+mini.clear()
+print("Authenticating for "..p)
+local packet={["door"]=door, ["user"]=p}
+rednet.broadcast(textutils.serialize(packet))
+while true do
+id,p=rednet.receive()
+if id==30 then
+if p=="true" then
+mini.clear()
+print("Welcome, "..p)
+for k,v in pairs(rs.getSides()) do
+rs.setOutput(v, true)
+end
+else
+mini.clear()
+print("Sorry, you are not allowed to access this door")
+end
+sleep(3)
+os.reboot()
+end
+end

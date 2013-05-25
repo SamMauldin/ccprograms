@@ -1,4 +1,8 @@
 local args={...}
+local draw = true
+if args[2]=="noborder" then
+	draw=false
+end
 print("Building vm for "..args[1])
 local vm=args[1]
 if not fs.isDir(vm) then
@@ -14,7 +18,10 @@ end
 local vmstat="LOADING"
 
 local x,y=term.getSize()
-local vmredirect=redirect.createRedirectBuffer(x,y-1,colors.white,colors.black,true)
+if draw then
+	y=y-1
+end
+local vmredirect=redirect.createRedirectBuffer(x,y,colors.white,colors.black,true)
 
 local oldshutdown=os.shutdown
 local oldreboot=os.reboot
@@ -113,11 +120,13 @@ os.shutdown()
 end
 
 function doMAIN()
+if draw then
 goroutine.spawn("draw", doDRAW)
 goroutine.spawn("tick", doEVENT)
-goroutine.spawn("power", doVMPOWER)
 goroutine.assignEvent("tick","mouse_drag")
 goroutine.assignEvent("tick","mouse_click")
+end
+goroutine.spawn("power", doVMPOWER)
 vmstat="Stopped"
 while true do
 sleep(0.1)
