@@ -107,6 +107,7 @@ goroutine.kill("vm")
 vmstat="Stopped"
 elseif vmstat=="Rebooting" then
 vmstat="Booting"
+vmredirect=redirect.createRedirectBuffer(x,y,colors.white,colors.black,true)
 goroutine.kill("vm")
 elseif vmstat=="Booting" then
 launchVM()
@@ -127,7 +128,11 @@ goroutine.assignEvent("tick","mouse_drag")
 goroutine.assignEvent("tick","mouse_click")
 end
 goroutine.spawn("power", doVMPOWER)
-vmstat="Stopped"
+if draw then
+	vmstat="Stopped"
+else
+	vmstat="Booting"
+end
 while true do
 sleep(0.1)
 if vmstat=="EXITING" then
