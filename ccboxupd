@@ -52,6 +52,8 @@ sleep(0.01)
 
 vmredirect.blit()
 
+if draw then
+
 term.setCursorPos(1,y)
 term.setBackgroundColor(colors.gray)
 term.clearLine()
@@ -68,6 +70,8 @@ term.write("S")
 term.setCursorPos(x-2,y)
 term.setBackgroundColor(colors.lime)
 term.write("B")
+
+end
 
 term.setCursorBlink(vmredirect.cursorBlink)
 term.setCursorPos(vmredirect.curX, vmredirect.curY)
@@ -121,8 +125,8 @@ os.shutdown()
 end
 
 function doMAIN()
-if draw then
 goroutine.spawn("draw", doDRAW)
+if draw then
 goroutine.spawn("tick", doEVENT)
 goroutine.assignEvent("tick","mouse_drag")
 goroutine.assignEvent("tick","mouse_click")
