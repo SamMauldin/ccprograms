@@ -1,0 +1,212 @@
+-- Flow turtle library
+-- By Sxw1212
+
+local data = { pos = {}, map = {}, waypoints = {}, mapping = true }
+
+function load()
+	if fs.exists("/.flow.dat") then
+		local fh = fs.open("/.flow.dat", "r")
+		if fh then
+			data = textutils.unserialize(fh.readAll())
+			fh.close()
+		else
+			print("Error loading data file")
+		end
+	end
+	if data.pos == {} then
+		print("Set position with setPos(x, y, z, f)")
+	end
+end
+
+function save()
+	fs.delete("/.flow.dat")
+	local fh = fs.open("/.flow.dat")
+	if fh then
+		fh.write(textutils.serialize(data))
+		fh.close()
+	else
+		print("Error saving")
+	end
+end
+
+function setMapping(mapping)
+	data.mapping = mapping
+end
+
+function setPos(x, y, z, f)
+	data.pos = {x, y, z, f}
+end
+
+function finc()
+	if data.pos[4] == 0 then
+		data.pos[3] = data.pos[3] + 1
+	elseif data.pos[4] == 1 then
+		data.pos[1] = data.pos[1] - 1
+	elseif data.pos[4] == 2 then
+		data.pos[3] = data.pos[3] - 1
+	elseif data.pos[4] == 3 then
+		data.pos[1] = data.pos[1] + 1
+	end
+	save()
+end
+
+function binc()
+	if data.pos[4] == 0 then
+		data.pos[3] = data.pos[3] - 1
+	elseif data.pos[4] == 1 then
+		data.pos[1] = data.pos[1] + 1
+	elseif data.pos[4] == 2 then
+		data.pos[3] = data.pos[3] + 1
+	elseif data.pos[4] == 3 then
+		data.pos[1] = data.pos[1] - 1
+	end
+	save()
+end
+
+function linc()
+	if data.pos[4] == 0 then
+		data.pos[4] = 3
+	else
+		data.pos[4] = data.pos[4] -1
+	end
+	save()
+end
+
+function rinc()
+	if data.pos[4] == 3 then
+		data.pos[4] = 0
+	else
+		data.pos[4] = data.pos[4] + 1
+	end
+	save()
+end
+
+function initpos(x, y, z)
+	if not data.map[x] then
+		data.map[x] = {}
+	end
+	if not data.map[x][y] then
+		data.map[x][y] = {}
+	end
+	if not data.map[x][y][z] then
+		data.map[x][y][z] = false
+	end
+end
+
+function incf()
+	if f == 0 then
+		return data.pos[1], data.pos[3] + 1
+	elseif f == 1 then
+		return data.pos[1] - 1, data.pos[3]
+	elseif f == 2 then
+		return data.pos[1], data.pos[3] - 1
+	elseif f == 3 then
+		return data.pos[1] + 1, data.pos[3]
+	end
+end
+
+function map()
+	if data.mapping then
+		local x = data.pos[1]
+		local y = data.pos[2]
+		local z = data.pos[3]
+		local f = data.pos[4]
+		initpos(x, y, z)
+		data.map[x][y][z] = false
+		initpos(x, y + 1, z)
+		if turtle.detectUp() then
+			data.map[x][y+1][z] = true
+		end
+		initpos(x, y - 1, z)
+		if turtle.detectDown() then
+			data.map[x][y-1][z] = true
+		end
+		x, z = incf()
+		initpos(x, y, z)
+		if turtle.detect() then
+			data.map[x][y][z] = true
+		end
+		save()
+	end
+end
+
+-- Basic turtle movement
+
+function forward()
+	if turtle.forward() then
+		finc()
+		map()
+		return true
+	else
+		return false
+	end
+end
+
+function back()
+	if turtle.back() then
+		binc()
+		map()
+		return true
+	else
+		return false
+	end
+end
+
+function up()
+	if turtle.up() then
+		data.pos[2] = data.pos[2] + 1
+		map()
+		return true
+	else
+		return false
+	end
+end
+
+function down()
+	if turtle.down() then
+		data.pos[2] = data.pos[2] - 1
+		map()
+		return true
+	else
+		return false
+	end
+end
+
+function turnLeft()
+	turtle.turnLeft()
+	linc()
+end
+
+function turnRight()
+	turtle.turnRight()
+	rinc()
+end
+
+-- More advanced movement
+
+function face(f)
+	while data.pos[4] != f do
+		turnRight()
+	end
+end
+
+load()
+
+-- All credit goes to TehPers on the pathfinder API
+if not fs.exists("/.pf/flow") then
+	fs.makeDir("/.pf")
+	local burl = "https://raw.github.com/Sxw1212/ccprograms/master/TehPers/Pathfinder/"
+	local files = { "MinHeap", "Pathfinder", "deepcopy", "Point", "SearchNode", "Surr" }
+	for k, v in pairs(files) do
+		local req = http.get(burl .. v)
+		if req then
+			local fh = fs.open("/.pf/" ..v)
+			fh.write(req.readAll())
+			fh.close()
+		else
+			error("Error loading Pathfinder")
+		end
+	end
+	fs.makeDir("/.pf/flow")
+end
+os.loadAPI("/.pf/Pathfinder")

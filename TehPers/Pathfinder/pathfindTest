@@ -1,0 +1,68 @@
+print(os.loadAPI(".pf/Pathfinder"))
+print(os.loadAPI(".pf/Point"))
+
+-- Edit me to make obstacles
+world = {
+ {1, 1, 1, 1, 1, 1, 1, 1, 0, 1},
+ {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+ {1, 1, 1, 1, 1, 1, 1, 1, 2, 1},
+ {1, 1, 1, 1, 1, 1, 1, 1, 3, 1},
+ {1, 1, 1, 1, 1, 1, 1, 1, 4, 1},
+ {1, 1, 1, 1, 1, 1, 1, 1, 0, 1},
+ {1, 1, 1, 1, 1, 1, 1, 1, 0, 1},
+ {1, 1, 1, 1, 1, 1, 1, 1, 0, 1},
+ {1, 1, 1, 1, 1, 1, 1, 1, 0, 1},
+ {1, 1, 1, 1, 1, 1, 1, 1, 0, 1}
+}
+
+open = {}
+
+sX, sY = 1, 1
+
+function getCost(x, y, z)
+ if z and z ~= 0 then return nil end
+ if world[y] then
+  if world[y][x] then
+   if world[y][x] == 0 then return nil end
+   open[y] = open[y] or {}
+   open[y][x] = true
+   return world[y][x]
+  end
+ end
+ return nil
+end
+
+function isPath(x, y)
+ return world[y][x] < 0
+end
+
+function redraw()
+ --term.clear()
+ for x = 1, #world[1] do
+  for y = 1, #world do
+   local c = (open[y] and open[y][x]) and colors.blue or colors.black
+   c = isPath(x, y) and colors.green or c
+   local g = world[y][x]
+   g = g and math.abs(g) or 0
+   if g == 0 then c = colors.red g = " " end
+   term.setCursorPos(x, y)
+   term.setBackgroundColor(c)
+   write(g)
+  end
+ end
+end
+
+term.clear()
+term.setCursorPos(1, 1)
+path = Pathfinder.findPath(getCost, 1, 1, 10, 10)
+while path do
+ if world[path.position.y] and world[path.position.y][path.position.x] and world[path.position.y][path.position.x] > 0 then
+  world[path.position.y][path.position.x] = -world[path.position.y][path.position.x]
+  term.setCursorPos(path.position.x, path.position.y)
+  write("P")
+ end
+ path = path.next
+end
+term.clear()
+redraw()
+ 

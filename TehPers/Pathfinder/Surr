@@ -1,0 +1,4 @@
+function new(x, y, z)
+ return {point = Point.new(x, y, z), cost = 1}
+end
+ 

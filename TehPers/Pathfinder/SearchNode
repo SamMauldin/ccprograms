@@ -1,0 +1,9 @@
+function new(_position, _cost, _pathCost, _next)
+ return {
+  position = _position,
+  cost = _cost,
+  pathCost = _pathCost,
+  next = _next
+ }
+end
+ 

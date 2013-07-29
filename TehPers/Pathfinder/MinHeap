@@ -1,0 +1,34 @@
+dofile(".pf/deepcopy")
+
+function new()
+ r = {}
+ 
+ function r:hasNext() return self.curNode ~= nil end
+ 
+ function r:add(item)
+  local curNode = self.curNode
+  if curNode == nil then
+   curNode = item
+  elseif curNode.next == nil and item.cost < curNode.cost then
+   item.nextListElem = curNode
+   curNode = item
+  else
+   local ptr = curNode
+   while ptr.nextListElem ~= nil and ptr.nextListElem.cost < item.cost do
+    ptr = ptr.nextListElem
+   end
+   item.nextListElem = ptr.nextListElem
+   ptr.nextListElem = item
+  end
+  self.curNode = curNode
+ end
+ 
+ function r:extractFirst()
+  local result = self.curNode
+  self.curNode = self.curNode.nextListElem
+  return result
+ end
+ 
+ return r
+end
+ 

@@ -1,0 +1,56 @@
+os.loadAPI(".pf/Point")
+os.loadAPI(".pf/SearchNode")
+os.loadAPI(".pf/MinHeap")
+os.loadAPI(".pf/Surr")
+
+local surrounding = {
+ Surr.new(1, 0, 0), Surr.new(0, 1, 0), Surr.new(0, 0, 1),
+ Surr.new(-1, 0, 0), Surr.new(0, -1, 0), Surr.new(0, 0, -1)
+}
+
+-- Flips path so you can follow it by pulling the last node off
+function findPath(getCost, sX, sY, fX, fY)
+ return findPathReversed(getCost, Point.new(fX, fY), Point.new(sX, sY))
+end
+
+function findPath3D(getCost, sX, sY, sZ, fX, fY, fZ)
+ return findPathReversed(getCost, Point.new(fX, fY, fZ), Point.new(sX, sY, sZ))
+end
+
+function contains(t, value)
+ for k, v in pairs(t) do if v == value then return true end end
+end
+
+function findPathReversed(getCost, start, finish)
+ local startNode = SearchNode.new(start, start:getDistanceSquared(finish), 0)
+ 
+ local openList = MinHeap.new()
+ openList:add(startNode)
+ 
+ brWorld = {}
+ while openList:hasNext() do
+  local current = openList:extractFirst()
+  
+  if current.position:getDistanceSquared(finish) <= 0 then
+   return SearchNode.new(finish, current.pathCost + 1, current.cost + 1, current)
+  end
+  
+  for i = 1, #surrounding do
+   local surr = surrounding[i]
+   local tmp = Point.new(current.position, surr.point)
+   --print(tmp.x, " ", tmp.y, " ", tmp.z)
+   local h = getCost(tmp.x, tmp.y, tmp.z)
+   -- If surrounding node is passable and has not been calculated already
+   if h ~= nil and not brWorld[tmp:tostring()] then
+    brWorld[tmp:tostring()] = true
+    local pathCost = current.pathCost + h
+    local cost = pathCost + tmp:getDistanceSquared(finish)
+    node = SearchNode.new(tmp, cost, pathCost, current)
+    openList:add(node)
+   end
+  end
+ end
+ 
+ return nil
+end
+ 

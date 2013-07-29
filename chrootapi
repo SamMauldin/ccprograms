@@ -46,46 +46,62 @@ local function starts(String,Start)
 end
 --BEGIN
 local function valid(path)
-local xpath=fscombine(chrootpath, path)
-if starts(xpath, chrootpath) then
-return xpath
-else
-error("No escaping the chroot jail! The xpath is "..xpath)
+	if starts(fscombine("", path), "rom") then
+		return path
+	end
+	local xpath=fscombine(chrootpath, path)
+	if starts(xpath, chrootpath) then
+		return xpath
+	else
+		error("No escaping the chroot jail! The xpath is "..xpath)
+	end
 end
+
+local function root(path)
+	if fscombine(chrootpath, "") == fscombine(path, "") then
+		return true
+	end
 end
 
 fs.list=function(path)
-return rootfs.list(valid(path))
+	if root(valid(path)) then
+		local list = rootfs.list(valid(path))
+		table.insert(list, "rom")
+		return list
+	else
+		return rootfs.list(valid(path))
+	end
 end
+
 fs.exists=function(path)
-return rootfs.exists(valid(path))
+	return rootfs.exists(valid(path))
 end
 fs.isDir=function(path)
-return rootfs.isDir(valid(path))
+	return rootfs.isDir(valid(path))
 end
 fs.isReadOnly=function(path)
-return rootfs.isReadOnly(valid(path))
+	return rootfs.isReadOnly(valid(path))
 end
 fs.getDrive=function(path)
-return rootfs.getDrive(valid(path))
+	return rootfs.getDrive(valid(path))
 end
 fs.getSize=function(path)
-return rootfs.getSize(chrootpath..path)
+	return rootfs.getSize(chrootpath..path)
 end
 fs.makeDir=function(path)
-return rootfs.makeDir(valid(path))
+	return rootfs.makeDir(valid(path))
 end
 fs.move=function(path, cpath)
-return rootfs.move(valid(path), valid(cpath))
+	return rootfs.move(valid(path), valid(cpath))
 end
 fs.copy=function(path, cpath)
-return rootfs.copy(valid(path), valid(cpath))
+	return rootfs.copy(valid(path), valid(cpath))
 end
 fs.delete=function(path)
-return rootfs.delete(valid(path))
+	return rootfs.delete(valid(path))
 end
 fs.open=function(path, m)
-return rootfs.open(valid(path), m)
+	return rootfs.open(valid(path), m)
 end
 
 fs.secret=function()

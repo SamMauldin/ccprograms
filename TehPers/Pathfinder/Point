@@ -1,0 +1,47 @@
+function new(a1, a2, a3)
+ if type(a1) == "table" then
+  local x = a1.x + a2.x
+  local y = a1.y + a2.y
+  local z = (a1.z and a2.z) and (a1.z + a2.z) or 0
+  return new(x, y, z)
+ end
+ 
+ local r = {
+  x = a1,
+  y = a2,
+  z = a3,
+ }
+ 
+ function r:getDistanceSquared(point)
+  local dx = math.abs(self.x - point.x)
+  local dy = math.abs(self.y - point.y)
+  local dz = 0
+  if self.z and point.z then dz = math.abs(self.z - point.z) end
+  return dx + dy + dz
+ end
+ 
+ function r:equals(p)
+  return p.x == self.x and p.y == self.y and p.z == self.z
+ end
+ 
+ function r:tostring()
+  return self.x .. ", " .. self.y .. (self.z and (", " .. self.z) or "")
+ end
+ 
+ function r:addX(n)
+  return new(self.x + n, self.y, self.z)
+ end
+ 
+ function r:addY(n)
+  return new(self.x, self.y + n, self.z)
+ end
+ 
+ function r:addZ(n)
+  return new(self.x, self.y, self.z + n)
+ end
+ 
+ return r
+end
+
+zero = new(0, 0, 0)
+ 
