@@ -249,19 +249,13 @@ end
 
 function wander()
 	while true do
-		local move = math.floor(math.random()*8)
+		local move = math.floor(math.random()*5)
 		if move == 0 then
 			forward()
 		elseif move == 1 then
 			back()
 		elseif move == 2 then
-			face(0)
-		elseif move == 3 then
-			face(1)
-		elseif move == 4 then
-			face(2)
-		elseif move == 5 then
-			face(3)
+			face(math.floor(math.random()*3))
 		elseif move == 6 then
 			up()
 		elseif move == 7 then
