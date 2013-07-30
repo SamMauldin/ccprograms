@@ -84,7 +84,7 @@ function rinc()
 end
 
 function initpos(x, y, z)
-	print(x .. ":" .. y .. ":" .. z)
+	print(tostring(x) .. ":" .. tostring(y) .. ":" .. tostring(z))
 	if not data.map[x] then
 		data.map[x] = {}
 	end
