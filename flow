@@ -245,10 +245,24 @@ function pathfind(x, y, z, nomap)
 	end
 end
 
+function setWaypoint(name, x, y, z)
+	x = x or data.pos[1]
+	y = y or data.pos[2]
+	z = z or data.pos[3]
+	data.waypoints[name] = {x, y, z}
+end
+
+function gotoWaypoint(name)
+	if data.waypoints[name] then
+		return pathfind(data.waypoints[name][1], data.waypoints[name][2], data.waypoints[name][3])
+	end
+	return false
+end
+
 -- Misc
 
-function wander()
-	while true do
+function wander(moves)
+	for i = 1, moves do
 		local move = math.floor(math.random()*6)
 		if move == 0 then
 			forward()
@@ -263,7 +277,6 @@ function wander()
 		elseif move == 5 then
 			down()
 		end
-		
 	end
 end
 
