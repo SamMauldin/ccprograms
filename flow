@@ -256,9 +256,9 @@ function wander()
 			back()
 		elseif move == 2 then
 			face(math.floor(math.random()*3))
-		elseif move == 6 then
+		elseif move == 3 then
 			up()
-		elseif move == 7 then
+		elseif move == 4 then
 			down()
 		end
 		
