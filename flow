@@ -255,10 +255,12 @@ function wander()
 		elseif move == 1 then
 			back()
 		elseif move == 2 then
-			face(math.floor(math.random()*3))
+			turnLeft()
 		elseif move == 3 then
-			up()
+			turnRight()
 		elseif move == 4 then
+			up()
+		elseif move == 5 then
 			down()
 		end
 		
