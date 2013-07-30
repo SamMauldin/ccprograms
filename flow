@@ -269,6 +269,17 @@ function getWaypoints(name)
 	return data.waypoints
 end
 
+function reset(sure)
+	if sure then
+		data.waypoints = {}
+		data.map = {}
+		save()
+		return true
+	else
+		return false
+	end
+end
+
 -- Misc
 
 function wander(moves)
