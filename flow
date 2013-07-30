@@ -187,11 +187,13 @@ end
 function turnLeft()
 	oldturtle.turnLeft()
 	linc()
+	return true
 end
 
 function turnRight()
 	oldturtle.turnRight()
 	rinc()
+	return true
 end
 
 turtle.up = up
