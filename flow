@@ -121,8 +121,9 @@ function advmap()
 		local f = data.pos[4]
 		turnLeft()
 		map(true)
-		turnRight()
-		turnRight()
+		turnLeft()
+		map(true)
+		turnLeft()
 		map(true)
 		turnLeft()
 	end
