@@ -206,9 +206,9 @@ function pathfind(x, y, z, nomap)
 			if data.map[x][y] then
 				-- I use == false because it's unknown
 				if data.map[x][y][z] then
-					return 1
-				elseif data.map == false then
 					return 0
+				elseif data.map[x][y][z] == false then
+					return 1
 				end
 			end
 		end
