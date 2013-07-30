@@ -222,7 +222,7 @@ function pathfind(x, y, z, nomap, recurse)
 			if data.map[x][y] then
 				-- I use == false because it's unknown
 				if data.map[x][y][z] then
-					return 0
+					return nil
 				elseif data.map[x][y][z] == false then
 					return 1
 				end
