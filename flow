@@ -265,6 +265,10 @@ function delWaypoint(name)
 	save()
 end
 
+function getWaypoints(name)
+	return data.waypoints
+end
+
 -- Misc
 
 function wander(moves)
