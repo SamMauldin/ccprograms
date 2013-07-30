@@ -250,6 +250,7 @@ function setWaypoint(name, x, y, z)
 	y = y or data.pos[2]
 	z = z or data.pos[3]
 	data.waypoints[name] = {x, y, z}
+	save()
 end
 
 function gotoWaypoint(name)
@@ -257,6 +258,11 @@ function gotoWaypoint(name)
 		return pathfind(data.waypoints[name][1], data.waypoints[name][2], data.waypoints[name][3])
 	end
 	return false
+end
+
+function delWaypoint(name)
+	data.waypoints[name] = nil
+	save()
 end
 
 -- Misc
