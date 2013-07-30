@@ -265,6 +265,7 @@ function pathfind(x, y, z, nomap, recurse)
 				done = false
 			end
 			if not done then
+				forward()
 				pathfind(x, y, z, nomap, true)
 			end
 		end
