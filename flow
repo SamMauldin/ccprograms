@@ -203,9 +203,9 @@ end
 function pathfind(x, y, z, nomap)
 	local function cost(x, y, z)
 		if data.map[x] then
-			if data.map[y] then
+			if data.map[x][y] then
 				-- I use == false because it's unknown
-				if data.map[z] then
+				if data.map[x][y][z] then
 					return 1
 				elseif data.map == false then
 					return 0
