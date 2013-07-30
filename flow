@@ -216,7 +216,30 @@ function pathfind(x, y, z, nomap)
 	end
 	local path = Pathfinder.findPath3D(cost, data.pos[1], data.pos[2], data.pos[3], x, y, z)
 	if path then
-	
+		while path do
+			local curDir = data.pos[4]
+			if path.position.x > x then
+				curDir = 1
+			elseif path.position.x < x then
+				curDir = 3
+			elseif path.position.z > z then
+				curDir = 2
+			elseif path.position.z < z then
+				curDir = 0
+			end
+			face(curDir)
+			
+			if y < path.position.y then
+				up()
+			elseif y > path.position.y then
+				down()
+			elseif x ~= path.position.x or z ~= path.position.z then
+				forward()
+			end
+			
+			path = path.next
+		end
+		return true
 	else
 		return false
 	end
