@@ -133,6 +133,10 @@ function map()
 	end
 end
 
+function getPos()
+	return data.pos
+end
+
 -- Basic turtle movement
 
 function forward()
