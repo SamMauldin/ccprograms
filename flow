@@ -113,6 +113,7 @@ function map()
 		local y = data.pos[2]
 		local z = data.pos[3]
 		local f = data.pos[4]
+		print(x, y, z)
 		initpos(x, y, z)
 		data.map[x][y][z] = false
 		initpos(x, y + 1, z)
