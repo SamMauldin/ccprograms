@@ -69,7 +69,7 @@ function linc()
 	if data.pos[4] == 0 then
 		data.pos[4] = 3
 	else
-		data.pos[4] = data.pos[4] -1
+		data.pos[4] = data.pos[4] - 1
 	end
 	save()
 end
@@ -206,9 +206,19 @@ turtle.back = back
 -- More advanced movement
 
 function face(f)
-	while data.pos[4] ~= f do
-		turnRight()
+	if data.pos[4] == f then
+		return true
 	end
+	local turn = data.pos[4] - f
+	if turn == -1 or turn == 3 then
+		turnRight()
+	elseif turn == 1 or 3 then
+		turnLeft()
+	elseif math.abs(turn) == 2 then
+		turnLeft()
+		turnLeft()
+	end
+	return true
 end
 
 turtle.face = face
@@ -265,8 +275,7 @@ function pathfind(x, y, z, nomap, recurse)
 				done = false
 			end
 			if not done then
-				forward()
-				up()
+				-- In case of minor changes
 				pathfind(x, y, z, nomap, true)
 			end
 		end
