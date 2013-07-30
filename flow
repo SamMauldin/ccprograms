@@ -216,7 +216,7 @@ turtle.face = face
 -- Oh my god I hate pathfinding, but I need it xD
 -- Nomap is optional, don't use it unless you KNOW there is a path, and even then... :P
 -- TL;DR: Dont use it.
-function pathfind(x, y, z, nomap)
+function pathfind(x, y, z, nomap, recurse)
 	local function cost(x, y, z)
 		if data.map[x] then
 			if data.map[x][y] then
@@ -254,6 +254,19 @@ function pathfind(x, y, z, nomap)
 			end
 			
 			path = path.next
+		end
+		if not recurse then
+			local done = true
+			if x ~= data.pos[1] then
+				done = false
+			elseif y ~= data.pos[2] then
+				done = false
+			elseif z ~= data.pos[3] then
+				done = false
+			end
+			if not done then
+				pathfind(x, y, z, nomap, true)
+			end
 		end
 		return true
 	else
