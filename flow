@@ -229,11 +229,11 @@ function pathfind(x, y, z, nomap)
 			end
 			face(curDir)
 			
-			if y < path.position.y then
+			if data.pos[2] < path.position.y then
 				up()
-			elseif y > path.position.y then
+			elseif data.pos[2] > path.position.y then
 				down()
-			elseif x ~= path.position.x or z ~= path.position.z then
+			elseif data.pos[1] ~= path.position.x or data.pos[3] ~= path.position.z then
 				forward()
 			end
 			
