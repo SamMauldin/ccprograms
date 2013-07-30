@@ -1,7 +1,7 @@
 -- Flow turtle library
 -- By Sxw1212
 
-local data = { pos = {}, map = {}, waypoints = {}, mapping = true }
+local data = { pos = {}, map = {}, waypoints = {}, mapping = true, advmapping = false }
 
 function load()
 	if fs.exists("/.flow.dat") then
@@ -31,6 +31,11 @@ end
 
 function setMapping(mapping)
 	data.mapping = mapping
+	save()
+end
+
+function setAdvMapping(advmapping)
+	data.advmapping = advmapping
 	save()
 end
 
@@ -108,7 +113,22 @@ function incf()
 	end
 end
 
-function map()
+function advmap()
+	if data.advmapping then
+		local x = data.pos[1]
+		local y = data.pos[2]
+		local z = data.pos[3]
+		local f = data.pos[4]
+		turnLeft()
+		map(true)
+		turnRight()
+		turnRight()
+		map(true)
+		turnLeft()
+	end
+end
+
+function map(recurse)
 	if data.mapping then
 		local x = data.pos[1]
 		local y = data.pos[2]
@@ -128,6 +148,9 @@ function map()
 		initpos(x, y, z)
 		if turtle.detect() then
 			data.map[x][y][z] = true
+		end
+		if not recurse then
+			advmap()
 		end
 		save()
 	end
