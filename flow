@@ -20,7 +20,7 @@ end
 
 function save()
 	fs.delete("/.flow.dat")
-	local fh = fs.open("/.flow.dat")
+	local fh = fs.open("/.flow.dat", "w")
 	if fh then
 		fh.write(textutils.serialize(data))
 		fh.close()
@@ -31,10 +31,12 @@ end
 
 function setMapping(mapping)
 	data.mapping = mapping
+	save()
 end
 
 function setPos(x, y, z, f)
 	data.pos = {x, y, z, f}
+	save()
 end
 
 function finc()
@@ -185,12 +187,51 @@ end
 -- More advanced movement
 
 function face(f)
-	while data.pos[4] != f do
+	while data.pos[4] ~= f do
 		turnRight()
 	end
 end
 
+-- Oh my god I hate pathfinding, but I need it xD
+-- Nomap is optional, don't use it unless you KNOW there is a path, and even then... :P
+-- TL;DR: Dont use it.
+function pathfind(x, y, z, nomap)
+	local function cost(x, y, z)
+		if data.map[x] then
+			if data.map[y] then
+				-- I use == false because it's unknown
+				if data.map[z] then
+					return 1
+				elseif data.map == false then
+					return 0
+				end
+			end
+		end
+		return nomap
+	end
+	local path = Pathfinder.findPath3D(cost, data.pos[1], data.pos[2], data.pos[3], x, y, z)
+	if path then
+	
+	else
+		return false
+	end
+end
+
 load()
+
+function update(file)
+	file = file or "/flow"
+	local url = "https://raw.github.com/Sxw1212/ccprograms/master/flow"
+	local req = http.get(url)
+	if req then
+		local fh = fs.open(file, "w")
+		fh.write(req.readAll())
+		fh.close()
+		return true
+	else
+		return false
+	end
+end
 
 -- All credit goes to TehPers on the pathfinder API
 if not fs.exists("/.pf/flow") then
@@ -200,7 +241,7 @@ if not fs.exists("/.pf/flow") then
 	for k, v in pairs(files) do
 		local req = http.get(burl .. v)
 		if req then
-			local fh = fs.open("/.pf/" ..v)
+			local fh = fs.open("/.pf/" ..v, "w")
 			fh.write(req.readAll())
 			fh.close()
 		else
@@ -209,4 +250,6 @@ if not fs.exists("/.pf/flow") then
 	end
 	fs.makeDir("/.pf/flow")
 end
+
 os.loadAPI("/.pf/Pathfinder")
+os.loadAPI("/.pf/Point")
