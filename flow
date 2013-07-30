@@ -218,13 +218,13 @@ function pathfind(x, y, z, nomap)
 	if path then
 		while path do
 			local curDir = data.pos[4]
-			if path.position.x > x then
+			if path.position.x > data.pos[1] then
 				curDir = 1
-			elseif path.position.x < x then
+			elseif path.position.x < data.pos[1] then
 				curDir = 3
-			elseif path.position.z > z then
+			elseif path.position.z > data.pos[3] then
 				curDir = 2
-			elseif path.position.z < z then
+			elseif path.position.z < data.pos[3] then
 				curDir = 0
 			end
 			face(curDir)
