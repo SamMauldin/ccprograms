@@ -139,8 +139,13 @@ end
 
 -- Basic turtle movement
 
+local oldturtle = {}
+for k, v in pairs(turtle) do
+	oldturtle[k] = v
+end
+
 function forward()
-	if turtle.forward() then
+	if oldturtle.forward() then
 		finc()
 		map()
 		return true
@@ -150,7 +155,7 @@ function forward()
 end
 
 function back()
-	if turtle.back() then
+	if oldturtle.back() then
 		binc()
 		map()
 		return true
@@ -160,7 +165,7 @@ function back()
 end
 
 function up()
-	if turtle.up() then
+	if oldturtle.up() then
 		data.pos[2] = data.pos[2] + 1
 		map()
 		return true
@@ -170,7 +175,7 @@ function up()
 end
 
 function down()
-	if turtle.down() then
+	if oldturtle.down() then
 		data.pos[2] = data.pos[2] - 1
 		map()
 		return true
@@ -180,14 +185,21 @@ function down()
 end
 
 function turnLeft()
-	turtle.turnLeft()
+	oldturtle.turnLeft()
 	linc()
 end
 
 function turnRight()
-	turtle.turnRight()
+	oldturtle.turnRight()
 	rinc()
 end
+
+turtle.up = up
+turtle.down = down
+turtle.turnLeft = turnLeft
+turtle.turnRight = turnRight
+turtle.forward = forward
+turtle.back = back
 
 -- More advanced movement
 
