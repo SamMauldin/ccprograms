@@ -249,7 +249,7 @@ end
 
 function wander()
 	while true do
-		local move = math.floor(math.random()*5)
+		local move = math.floor(math.random()*6)
 		if move == 0 then
 			forward()
 		elseif move == 1 then
