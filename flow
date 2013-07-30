@@ -84,7 +84,6 @@ function rinc()
 end
 
 function initpos(x, y, z)
-	print(tostring(x) .. ":" .. tostring(y) .. ":" .. tostring(z))
 	if not data.map[x] then
 		data.map[x] = {}
 	end
@@ -97,6 +96,7 @@ function initpos(x, y, z)
 end
 
 function incf()
+	local f = data.pos[4]
 	if f == 0 then
 		return data.pos[1], data.pos[3] + 1
 	elseif f == 1 then
