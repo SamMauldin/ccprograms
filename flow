@@ -366,6 +366,25 @@ function wander(moves)
 	end
 end
 
+function treeChop(woodslot)
+	turtle.select(woodslot)
+	if turtle.compare() then
+		local dir = flow.getPos()[4]
+		setWaypoint("flow-tmp-tree")
+		turtle.dig()
+		turtle.forward()
+		while turtle.compareUp() do
+			turtle.digUp()
+			turtle.up()
+		end
+		gotoWaypoint("flow-tmp-tree")
+		face(dir)
+		return true
+	else
+		return false
+	end
+end
+
 load()
 
 function update(file)
