@@ -285,11 +285,17 @@ function pathfind(x, y, z, nomap, recurse)
 			face(curDir)
 			
 			if data.pos[2] < path.position.y then
-				up()
+				while not up() do
+					sleep(0.5)
+				end
 			elseif data.pos[2] > path.position.y then
-				down()
+				while not down() do
+					sleep(0.5)
+				end
 			elseif data.pos[1] ~= path.position.x or data.pos[3] ~= path.position.z then
-				forward()
+				while not forward() do
+					sleep(0.5)
+				end
 			end
 			
 			path = path.next
@@ -304,7 +310,7 @@ function pathfind(x, y, z, nomap, recurse)
 				done = false
 			end
 			if not done then
-				-- In case of minor changes
+				-- In case of minor mapping changes
 				pathfind(x, y, z, nomap, true)
 			end
 		end
