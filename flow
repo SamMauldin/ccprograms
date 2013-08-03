@@ -251,7 +251,9 @@ end
 turtle.face = face
 
 -- Oh my god I hate pathfinding, but I need it xD
--- Nomap is optional, don't use it unless you KNOW there is a path, and even then... :P
+-- Nomap is optional, don't use it unless you KNOW there is a path, and even then... 
+-- Your turtle may or may not survive :P
+-- Anyways: if you need to use it, set it to a high number, like 10
 -- TL;DR: Dont use it.
 function pathfind(x, y, z, nomap, recurse)
 	local function cost(x, y, z)
