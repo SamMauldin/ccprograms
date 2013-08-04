@@ -285,15 +285,15 @@ function pathfind(x, y, z, nomap, recurse)
 			face(curDir)
 			
 			if data.pos[2] < path.position.y then
-				while not up() do
+				while not up() and not turtle.detectUp() do
 					sleep(0.5)
 				end
 			elseif data.pos[2] > path.position.y then
-				while not down() do
+				while not down() and not turtle.detectDown() do
 					sleep(0.5)
 				end
 			elseif data.pos[1] ~= path.position.x or data.pos[3] ~= path.position.z then
-				while not forward() do
+				while not forward() and not turtle.detect() do
 					sleep(0.5)
 				end
 			end
