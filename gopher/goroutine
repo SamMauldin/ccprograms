@@ -216,7 +216,7 @@ local nilRedir = {
   setTextScale = function() end,
   clear = function() end,
   clearLine = function() end,
-  
+  getSize = function() return 51,19 end,
 }
 
 function spawnBackground(name,method,...)
