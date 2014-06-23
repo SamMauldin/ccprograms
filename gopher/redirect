@@ -12,7 +12,7 @@ local redirectBufferBase = {
             term.native.setCursorPos(cx+buffer.scrX, cy+buffer.scrY)
           end
           for i=1,#text do
-            if cx<=buffer.width then
+            if cx>0 and cx<=buffer.width then
               local curCell=buffer[cy][cx]
               local char,textColor,backgroundColor=string.char(text:byte(i)),buffer.textColor,buffer.backgroundColor
               if buffer[cy].isDirty or curCell.char~=char or curCell.textColor~=textColor or curCell.backgroundColor~=backgroundColor then
@@ -270,7 +270,9 @@ local redirectBufferBase = {
 function createRedirectBuffer(width,height,fg,bg,isColor)
    bg=bg or colors.black
    fg=fg or colors.white
-   isColor=isColor~=nil and isColor or term.isColor()
+   if isColor==nil then
+     isColor=term.isColor()
+   end
    local buffer={}
    
    do 
